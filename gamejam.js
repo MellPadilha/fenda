@@ -15,6 +15,11 @@ function setup() {
 
 function draw() {
   background(0);
+
+   // Aumenta a velocidade conforme o tempo passa
+   if (frameCount % 300 === 0) { // A cada 5 segundos (assumindo 60 FPS)
+    gameSpeed += 1;
+  }
   
   // Dimensão visual atual
   if (player.dimension === 'top') {
