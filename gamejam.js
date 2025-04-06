@@ -6,6 +6,12 @@ let gameSpeed = 3;
 let currentDimension = 'top';
 let spawnRate = 60; // Frames entre novos obstáculos
 
+// Variáveis para o efeito de glitch
+let isGlitching = false;
+let glitchStartFrame = 0;
+let glitchDuration = 120; // duração do glitch (em frames)
+let nextGlitch = 600; // quando o próximo glitch vai acontecer
+
 function setup() {
   createCanvas(600, 400);
   player = new Player();
@@ -24,6 +30,28 @@ function draw() {
     background(0, 0, 255); // Azul para dimensão superior
   } else {
     background(255, 0, 0); // Vermelho para dimensão inferior
+  }
+
+  // Inicia o glitch se for a hora
+  if (frameCount === nextGlitch) {
+    isGlitching = true;
+    glitchStartFrame = frameCount;
+    // Próximo glitch entre 10 e 20 segundos
+    nextGlitch = frameCount + int(random(600, 1200));
+  }
+
+  // Se está em glitch
+  if (isGlitching) {
+    // Faz a tela piscar aleatoriamente
+    if (random() < 0.5) {
+      fill(0);
+      rect(0, 0, width, height);
+    }
+
+    // Verifica se o tempo do glitch acabou
+    if (frameCount - glitchStartFrame > glitchDuration) {
+      isGlitching = false;
+    }
   }
   
   player.update();
