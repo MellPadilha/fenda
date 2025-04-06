@@ -5,11 +5,9 @@ let jumpPower = -10;
 let gameSpeed = 3;
 let currentDimension = 'top';
 let spawnRate = 60; // Frames entre novos obstáculos
-let astronautImg;
 
 function setup() {
   createCanvas(600, 400);
-  astronautImg = loadImage('assets/astronauta.svg');
   player = new Player();
 }
 
@@ -76,7 +74,7 @@ class Player {
   
   show() {
     imageMode(CORNER);
-    image(astronautImg, this.x, this.y, this.size, this.size);
+    rect(this.x, this.y, this.size, this.size);
   }
 }
 
