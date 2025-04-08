@@ -5,6 +5,7 @@ let jumpPower = -10;
 let gameSpeed = 3;
 let currentDimension = 'top';
 let spawnRate = 60; // Frames entre novos obstáculos
+let points = 0;
 
 // Variáveis para o efeito de glitch
 let isGlitching = false;
@@ -19,6 +20,8 @@ function setup() {
 
 function draw() {
   background(0);
+
+  console.log('Pontos:' + points);
 
    // Aumenta a velocidade conforme o tempo passa
    if (frameCount % 300 === 0) { // A cada 5 segundos (assumindo 60 FPS)
@@ -81,6 +84,7 @@ function draw() {
 function keyPressed() {
   if (key === ' ') {
     player.switchDimension();
+    points++;
   }
 }
 
