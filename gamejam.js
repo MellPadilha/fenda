@@ -59,8 +59,12 @@ function draw() {
     textAlign(CENTER, CENTER);
     textSize(48);
     text("Game Over!", width / 2, height / 2 - 20);
+    textSize(32);
+    fill(255, 255, 255);
+    text("Pontos: " + points, width / 2, height / 2 + 30);
     textSize(24);
-    text("Press SPACE to Restart", width / 2, height / 2 + 30);
+    text("Press SPACE to Restart", width / 2, height / 2 + 100);
+    fill(255, 0, 0);
     player.show();
     return;
   }
