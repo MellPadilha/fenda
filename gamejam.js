@@ -3,115 +3,113 @@ let obstacles = [];
 let gravity = 0.6;
 let jumpPower = -10;
 let gameSpeed = 3;
+let currentDimension = 'top';
 let spawnRate = 60;
 let points = 0;
 
-// Glitch
 let isGlitching = false;
 let glitchStartFrame = 0;
 let glitchDuration = 120;
 let nextGlitch = 600;
 
-// Batida
-let hitEffect = false;
-let hitStartFrame = 0;
-let hitDuration = 30;
-
-// Estados
-let showInitMessage = true;
+let gameState = 'init';
 let countdown = 3;
-let countdownStartFrame = 0;
-let gameStarted = false;
-let showGo = false;
+let countdownStartFrame;
+let blink = true;
+
+let glitchOnSpeedUp = false;
 
 function setup() {
   createCanvas(600, 400);
-  resetGame();
+  player = new Player();
+  frameRate(60);
 }
 
 function draw() {
-  background('#424242');
-
-  if (showInitMessage) {
-    let blinkAlpha = abs(sin(frameCount * 0.05)) * 255;
-    fill(255, blinkAlpha);
-    textSize(32);
-    textAlign(CENTER, CENTER);
-    text("Press Space to Init", width / 2, height / 2);
+  if (gameState === 'init') {
+    background('#424242');
+    if (frameCount % 60 < 30) {
+      fill(255);
+      textAlign(CENTER, CENTER);
+      textSize(32);
+      text("Press SPACE to Init", width / 2, height / 2);
+    }
     return;
   }
 
-  if (!gameStarted) {
-    let elapsedFrames = frameCount - countdownStartFrame;
-
-    if (elapsedFrames < 180) {
-      fill(255);
-      textSize(64);
-      textAlign(CENTER, CENTER);
-
-      if (elapsedFrames < 60) {
-        text("3", width / 2, height / 2);
-      } else if (elapsedFrames < 120) {
-        text("2", width / 2, height / 2);
-      } else if (elapsedFrames < 180) {
-        text("1", width / 2, height / 2);
-      }
-
-      return;
-    } else if (!showGo) {
-      showGo = true;
-      setTimeout(() => {
-        gameStarted = true;
-      }, 800);
-    } else {
-      fill(255);
-      textSize(64);
-      textAlign(CENTER, CENTER);
-      text("GO!", width / 2, height / 2);
-      return;
-    }
-  }
-
-  if (hitEffect) {
-    if ((frameCount - hitStartFrame) % 10 < 5) {
-      background(255, 0, 0);
-    }
-
+  if (gameState === 'countdown') {
+    background('#424242');
     fill(255);
-    textSize(48);
     textAlign(CENTER, CENTER);
-    text("Game Over!", width / 2, height / 2);
-
-    if (frameCount - hitStartFrame > hitDuration) {
-      setTimeout(() => {
-        resetGame();
-      }, 2000);
+    textSize(64);
+    let count = countdown - int((frameCount - countdownStartFrame) / 60);
+    if (count > 0) {
+      text(count, width / 2, height / 2);
+    } else if (count === 0) {
+      text("GO!", width / 2, height / 2);
+    } else {
+      gameState = 'playing';
     }
     return;
   }
 
-  if (isGlitching && random() < 0.5) {
-    fill(0);
-    rect(0, 0, width, height);
+  if (gameState === 'gameover') {
+    background('#424242');
+    fill(255, 0, 0);
+    textAlign(CENTER, CENTER);
+    textSize(48);
+    text("Game Over!", width / 2, height / 2 - 20);
+    textSize(24);
+    text("Press SPACE to Restart", width / 2, height / 2 + 30);
+    player.show();
+    return;
   }
 
-  if (frameCount % 300 === 0) {
-    gameSpeed += 1;
+  // Jogando...
+  if (glitchOnSpeedUp && frameCount % 10 < 5) {
+    background(0);
+  } else {
+    background('#424242');
   }
 
+  if (glitchOnSpeedUp && frameCount - glitchStartFrame > 30) {
+    glitchOnSpeedUp = false;
+  }
+
+  // Mostrar pontos no topo esquerdo
+  fill(255);
+  textAlign(LEFT, TOP);
+  textSize(16);
+  text("Pontos: " + points, 10, 10);
+
+  // Glitch aleatório
   if (frameCount === nextGlitch) {
     isGlitching = true;
     glitchStartFrame = frameCount;
     nextGlitch = frameCount + int(random(600, 1200));
   }
 
-  if (frameCount - glitchStartFrame > glitchDuration) {
-    isGlitching = false;
+  if (isGlitching) {
+    if (random() < 0.5) {
+      fill(0);
+      rect(0, 0, width, height);
+    }
+    if (frameCount - glitchStartFrame > glitchDuration) {
+      isGlitching = false;
+    }
+  }
+
+  // Aumentar velocidade a cada 5 segundos
+  if (frameCount % 300 === 0) {
+    gameSpeed += 1;
+    glitchOnSpeedUp = true;
+    glitchStartFrame = frameCount;
   }
 
   player.update();
   player.show();
 
+  // Obstáculos
   if (frameCount % spawnRate === 0) {
     obstacles.push(new Obstacle());
   }
@@ -121,48 +119,37 @@ function draw() {
     obstacles[i].show();
 
     if (obstacles[i].hits(player)) {
-      hitEffect = true;
-      hitStartFrame = frameCount;
-      return;
+      gameState = 'gameover';
+      noLoop();
+      setTimeout(() => {
+        loop();
+      }, 500);
     }
 
     if (obstacles[i].offscreen()) {
       obstacles.splice(i, 1);
     }
   }
-
-  fill(255);
-  textSize(16);
-  textAlign(LEFT, TOP);
-  text("Pontos: " + points, 10, 10);
 }
 
 function keyPressed() {
-  if (showInitMessage && key === ' ') {
-    showInitMessage = false;
+  if (gameState === 'init' && key === ' ') {
+    gameState = 'countdown';
     countdownStartFrame = frameCount;
-    return;
-  }
-
-  if (gameStarted && key === ' ') {
+    obstacles = [];
+    points = 0;
+    gameSpeed = 3;
+    player = new Player();
+  } else if (gameState === 'gameover' && key === ' ') {
+    gameState = 'init';
+    obstacles = [];
+    points = 0;
+    gameSpeed = 3;
+    player = new Player();
+  } else if (gameState === 'playing' && key === ' ') {
     player.switchDimension();
     points++;
   }
-}
-
-function resetGame() {
-  player = new Player();
-  obstacles = [];
-  gameSpeed = 3;
-  points = 0;
-  isGlitching = false;
-  nextGlitch = 600;
-  glitchStartFrame = 0;
-  hitEffect = false;
-  hitStartFrame = 0;
-  gameStarted = false;
-  showGo = false;
-  showInitMessage = true;
 }
 
 class Player {
@@ -182,7 +169,6 @@ class Player {
   }
 
   show() {
-    fill(255);
     rect(this.x, this.y, this.size, this.size);
   }
 }
@@ -206,12 +192,11 @@ class Obstacle {
 
   hits(player) {
     return this.dimension === player.dimension &&
-           player.x < this.x + this.width &&
-           player.x + player.size > this.x;
+           player.x + player.size > this.x &&
+           player.x < this.x + this.width;
   }
 
   show() {
-    fill(255);
     rect(this.x, this.y, this.width, this.height);
   }
 }
